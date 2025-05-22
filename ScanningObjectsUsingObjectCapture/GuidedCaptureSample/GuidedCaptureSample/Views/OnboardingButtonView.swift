@@ -70,6 +70,13 @@ struct OnboardingButtonView: View {
                                  shouldApplyBackground: shouldApplyBackground,
                                  showBusyIndicator: showBusyIndicator,
                                  action: { [weak session] in session?.finish() })
+
+                    // Allow saving the capture for later reconstruction when the user decides not to process now.
+                    CreateButton(buttonLabel: LocalizedString.saveDraft,
+                                 buttonLabelColor: .blue,
+                                 action: { [weak appModel] in
+                        appModel?.saveDraft()
+                    })
                 }
                 if currentStateInputs.contains(where: { $0 == .objectCannotBeFlipped }) {
                     CreateButton(buttonLabel: LocalizedString.cannotFlipYourObject,

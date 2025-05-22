@@ -220,7 +220,9 @@ private struct GalleryView: View {
     }
 
     private var captureFolderURLs: [URL]? {
-        guard let topLevelFolder = appModel.captureFolderManager?.appDocumentsFolder else { return nil }
+        // Use the capture manager's documents folder if available, otherwise fall back
+        // to the app's Documents directory so saved captures remain visible after a reset.
+        let topLevelFolder = appModel.captureFolderManager?.appDocumentsFolder ?? URL.documentsDirectory
         let folderURLs = try? FileManager.default.contentsOfDirectory(
             at: topLevelFolder,
             includingPropertiesForKeys: nil,
@@ -247,13 +249,16 @@ private struct GalleryView: View {
 }
 
 private struct ThumbnailView: View {
+    @Environment(AppDataModel.self) var appModel
     let captureFolderURL: URL
     let frameSize: CGSize
     @State private var image: CGImage?
 
     var body: some View {
         if let imageURL = getFirstImage(from: captureFolderURL) {
-            ShareLink(item: captureFolderURL) {
+            Button(action: {
+                appModel.startReconstruction(fromExistingFolder: captureFolderURL)
+            }) {
                 VStack(spacing: 8) {
                     VStack {
                         if let image {
@@ -277,6 +282,11 @@ private struct ThumbnailView: View {
                 .frame(width: frameSize.width, height: frameSize.height)
                 .task {
                     image = await createThumbnail(url: imageURL)
+                }
+            }
+            .contextMenu {
+                ShareLink(item: captureFolderURL) {
+                    Label("Share", systemImage: "square.and.arrow.up")
                 }
             }
         }

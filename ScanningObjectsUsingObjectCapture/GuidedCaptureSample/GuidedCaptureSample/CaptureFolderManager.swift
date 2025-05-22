@@ -58,6 +58,20 @@ class CaptureFolderManager {
         try CaptureFolderManager.createDirectoryRecursively(modelsFolder)
     }
 
+    init(existingFolder: URL) throws {
+        captureFolder = existingFolder
+        imagesFolder = existingFolder.appendingPathComponent(Self.imagesFolderName)
+        checkpointFolder = existingFolder.appendingPathComponent("Checkpoint/")
+        modelsFolder = existingFolder.appendingPathComponent("Models/")
+
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: imagesFolder.path, isDirectory: &isDir), isDir.boolValue,
+              FileManager.default.fileExists(atPath: checkpointFolder.path, isDirectory: &isDir), isDir.boolValue,
+              FileManager.default.fileExists(atPath: modelsFolder.path, isDirectory: &isDir) else {
+            throw Error.invalidShotUrl
+        }
+    }
+
     // - MARK: Private interface below.
 
     // Creates a new capture directory based on the current timestamp in the top level Documents
@@ -121,4 +135,11 @@ class CaptureFolderManager {
     // What is appended in front of the capture id to get a file basename.
     private static let imageStringPrefix = "IMG_"
     private static let heicImageExtension = "HEIC"
+}
+
+private extension URL {
+    /// Convenience accessor for the application's Documents directory.
+    static var documentsDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
 }

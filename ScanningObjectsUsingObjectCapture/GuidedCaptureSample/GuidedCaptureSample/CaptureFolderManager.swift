@@ -40,6 +40,8 @@ class CaptureFolderManager {
     let modelsFolder: URL
 
     static let imagesFolderName = "Images/"
+    static let modelsFolderName = "Models/"
+    static let modelFileName = "model-mobile.usdz"
 
     init() throws {
         guard let newFolder = CaptureFolderManager.createNewCaptureDirectory() else {
@@ -54,8 +56,22 @@ class CaptureFolderManager {
         checkpointFolder = newFolder.appendingPathComponent("Checkpoint/")
         try CaptureFolderManager.createDirectoryRecursively(checkpointFolder)
 
-        modelsFolder = newFolder.appendingPathComponent("Models/")
+        modelsFolder = newFolder.appendingPathComponent(Self.modelsFolderName)
         try CaptureFolderManager.createDirectoryRecursively(modelsFolder)
+    }
+
+    init(existingFolder: URL) throws {
+        captureFolder = existingFolder
+        imagesFolder = existingFolder.appendingPathComponent(Self.imagesFolderName)
+        checkpointFolder = existingFolder.appendingPathComponent("Checkpoint/")
+        modelsFolder = existingFolder.appendingPathComponent(Self.modelsFolderName)
+
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: imagesFolder.path, isDirectory: &isDir), isDir.boolValue,
+              FileManager.default.fileExists(atPath: checkpointFolder.path, isDirectory: &isDir), isDir.boolValue,
+              FileManager.default.fileExists(atPath: modelsFolder.path, isDirectory: &isDir) else {
+            throw Error.invalidShotUrl
+        }
     }
 
     // - MARK: Private interface below.
@@ -121,4 +137,20 @@ class CaptureFolderManager {
     // What is appended in front of the capture id to get a file basename.
     private static let imageStringPrefix = "IMG_"
     private static let heicImageExtension = "HEIC"
+
+    var modelFileURL: URL {
+        modelsFolder.appendingPathComponent(Self.modelFileName)
+    }
+
+    var modelExists: Bool {
+        FileManager.default.fileExists(atPath: modelFileURL.path)
+    }
+
+    static func hasModel(in captureFolder: URL) -> Bool {
+        let url = captureFolder
+            .appendingPathComponent(Self.modelsFolderName)
+            .appendingPathComponent(Self.modelFileName)
+        return FileManager.default.fileExists(atPath: url.path)
+    }
 }
+

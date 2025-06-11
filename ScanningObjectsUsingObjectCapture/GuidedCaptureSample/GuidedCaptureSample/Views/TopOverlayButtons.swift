@@ -189,6 +189,7 @@ private struct VisualEffectRoundedCorner: ViewModifier {
 private struct GalleryView: View {
     @Environment(AppDataModel.self) var appModel
     @Binding var showCaptureFolders: Bool
+    @State private var generateMode: Bool = false
 
     var body: some View {
         if let captureFolderURLs {
@@ -208,11 +209,20 @@ private struct GalleryView: View {
                         .foregroundColor(.primary).bold()
                 }
                 Divider().padding(.vertical, 8)
+                HStack {
+                    Spacer()
+                    Button(generateMode ? "Done" : "Generate 3D Model") {
+                        generateMode.toggle()
+                    }
+                    .padding(.bottom, 8)
+                }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()),
                                          count: UIDevice.current.userInterfaceIdiom == .pad ? 5 : 3)) {
                     let frameWidth = UIDevice.current.userInterfaceIdiom == .pad ? 100 : 115
                     ForEach(captureFolderURLs, id: \.self) { url in
-                        ThumbnailView(captureFolderURL: url, frameSize: CGSize(width: frameWidth, height: frameWidth + 70))
+                        ThumbnailView(captureFolderURL: url,
+                                      frameSize: CGSize(width: frameWidth, height: frameWidth + 70),
+                                      generateMode: generateMode)
                     }
                 }
             }.padding()
@@ -220,7 +230,9 @@ private struct GalleryView: View {
     }
 
     private var captureFolderURLs: [URL]? {
-        guard let topLevelFolder = appModel.captureFolderManager?.appDocumentsFolder else { return nil }
+        // Use the capture manager's documents folder if available, otherwise fall back
+        // to the app's Documents directory so saved captures remain visible after a reset.
+        let topLevelFolder = appModel.captureFolderManager?.appDocumentsFolder ?? URL.documentsDirectory
         let folderURLs = try? FileManager.default.contentsOfDirectory(
             at: topLevelFolder,
             includingPropertiesForKeys: nil,
@@ -247,13 +259,30 @@ private struct GalleryView: View {
 }
 
 private struct ThumbnailView: View {
+    @Environment(AppDataModel.self) var appModel
     let captureFolderURL: URL
     let frameSize: CGSize
+    var generateMode: Bool
     @State private var image: CGImage?
+    private var hasModel: Bool {
+        CaptureFolderManager.hasModel(in: captureFolderURL)
+    }
 
     var body: some View {
         if let imageURL = getFirstImage(from: captureFolderURL) {
-            ShareLink(item: captureFolderURL) {
+            Button(action: {
+                if generateMode {
+                    if !hasModel {
+                        appModel.startReconstruction(fromExistingFolder: captureFolderURL)
+                    }
+                } else {
+                    if hasModel {
+                        appModel.viewModel(fromExistingFolder: captureFolderURL)
+                    } else {
+                        appModel.startReconstruction(fromExistingFolder: captureFolderURL)
+                    }
+                }
+            }) {
                 VStack(spacing: 8) {
                     VStack {
                         if let image {
@@ -277,6 +306,18 @@ private struct ThumbnailView: View {
                 .frame(width: frameSize.width, height: frameSize.height)
                 .task {
                     image = await createThumbnail(url: imageURL)
+                }
+            }
+            .overlay {
+                if generateMode && !hasModel {
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(Color.accentColor, lineWidth: 4)
+                }
+            }
+            .disabled(generateMode && hasModel)
+            .contextMenu {
+                ShareLink(item: captureFolderURL) {
+                    Label("Share", systemImage: "square.and.arrow.up")
                 }
             }
         }

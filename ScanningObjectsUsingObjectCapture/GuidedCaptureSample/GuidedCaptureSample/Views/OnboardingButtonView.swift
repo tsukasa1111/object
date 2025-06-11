@@ -72,8 +72,18 @@ struct OnboardingButtonView: View {
                                  action: { [weak session] in session?.finish() })
 
                     // Allow saving the capture for later reconstruction when the user decides not to process now.
+                    let draftBusyIndicator = session.state == .finishing && appModel.isSaveDraftEnabled ? true : false
                     CreateButton(buttonLabel: LocalizedString.saveDraft,
                                  buttonLabelColor: .blue,
+                                 showBusyIndicator: draftBusyIndicator,
+                                 action: { [weak appModel] in
+                        appModel?.saveDraft()
+                    })
+                } else if currentStateInputs.contains(where: { $0 == .saveDraft }) {
+                    let showBusyIndicator = session.state == .finishing && appModel.isSaveDraftEnabled ? true : false
+                    CreateButton(buttonLabel: LocalizedString.saveDraft,
+                                 buttonLabelColor: .blue,
+                                 showBusyIndicator: showBusyIndicator,
                                  action: { [weak appModel] in
                         appModel?.saveDraft()
                     })
@@ -90,15 +100,6 @@ struct OnboardingButtonView: View {
                     onboardingStateMachine.currentState == .secondSegmentComplete  ||
                     onboardingStateMachine.currentState == .thirdSegmentComplete {
                     CreateButton(buttonLabel: "", action: {})
-                }
-                if currentStateInputs.contains(where: { $0 == .saveDraft }) {
-                    let showBusyIndicator = session.state == .finishing && appModel.isSaveDraftEnabled ? true : false
-                    CreateButton(buttonLabel: LocalizedString.saveDraft,
-                                 buttonLabelColor: .blue,
-                                 showBusyIndicator: showBusyIndicator,
-                                 action: { [weak appModel] in
-                        appModel?.saveDraft()
-                    })
                 }
             }
             .padding(.bottom)

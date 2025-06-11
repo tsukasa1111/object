@@ -282,6 +282,7 @@ private struct ThumbnailView: View {
                         appModel.startReconstruction(fromExistingFolder: captureFolderURL)
                     }
                 }
+
             }) {
                 VStack(spacing: 8) {
                     VStack {

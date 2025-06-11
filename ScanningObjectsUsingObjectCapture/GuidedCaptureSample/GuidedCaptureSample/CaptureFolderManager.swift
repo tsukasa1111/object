@@ -66,6 +66,7 @@ class CaptureFolderManager {
         checkpointFolder = existingFolder.appendingPathComponent("Checkpoint/")
         modelsFolder = existingFolder.appendingPathComponent(Self.modelsFolderName)
 
+
         var isDir: ObjCBool = false
         guard FileManager.default.fileExists(atPath: imagesFolder.path, isDirectory: &isDir), isDir.boolValue,
               FileManager.default.fileExists(atPath: checkpointFolder.path, isDirectory: &isDir), isDir.boolValue,
@@ -151,6 +152,13 @@ class CaptureFolderManager {
             .appendingPathComponent(Self.modelsFolderName)
             .appendingPathComponent(Self.modelFileName)
         return FileManager.default.fileExists(atPath: url.path)
+    }
+}
+
+private extension URL {
+    /// Convenience accessor for the application's Documents directory.
+    static var documentsDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
 }
 

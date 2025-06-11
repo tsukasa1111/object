@@ -241,6 +241,15 @@ extension AppDataModel {
         }
     }
 
+    func viewModel(fromExistingFolder url: URL) {
+        do {
+            captureFolderManager = try CaptureFolderManager(existingFolder: url)
+            state = .viewing
+        } catch {
+            logger.error("Opening model failed!")
+            switchToErrorState(error: error)
+        }
+    }
     // Moves from prepareToReconstruct to .reconstructing.
     // Should be called from the ReconstructionPrimaryView async task once it is on the screen.
     private func startReconstruction() throws {

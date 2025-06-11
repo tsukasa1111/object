@@ -40,6 +40,8 @@ class CaptureFolderManager {
     let modelsFolder: URL
 
     static let imagesFolderName = "Images/"
+    static let modelsFolderName = "Models/"
+    static let modelFileName = "model-mobile.usdz"
 
     init() throws {
         guard let newFolder = CaptureFolderManager.createNewCaptureDirectory() else {
@@ -54,7 +56,7 @@ class CaptureFolderManager {
         checkpointFolder = newFolder.appendingPathComponent("Checkpoint/")
         try CaptureFolderManager.createDirectoryRecursively(checkpointFolder)
 
-        modelsFolder = newFolder.appendingPathComponent("Models/")
+        modelsFolder = newFolder.appendingPathComponent(Self.modelsFolderName)
         try CaptureFolderManager.createDirectoryRecursively(modelsFolder)
     }
 
@@ -62,7 +64,8 @@ class CaptureFolderManager {
         captureFolder = existingFolder
         imagesFolder = existingFolder.appendingPathComponent(Self.imagesFolderName)
         checkpointFolder = existingFolder.appendingPathComponent("Checkpoint/")
-        modelsFolder = existingFolder.appendingPathComponent("Models/")
+        modelsFolder = existingFolder.appendingPathComponent(Self.modelsFolderName)
+
 
         var isDir: ObjCBool = false
         guard FileManager.default.fileExists(atPath: imagesFolder.path, isDirectory: &isDir), isDir.boolValue,
@@ -135,6 +138,28 @@ class CaptureFolderManager {
     // What is appended in front of the capture id to get a file basename.
     private static let imageStringPrefix = "IMG_"
     private static let heicImageExtension = "HEIC"
+
+    var modelFileURL: URL {
+        modelsFolder.appendingPathComponent(Self.modelFileName)
+    }
+
+    var modelExists: Bool {
+        FileManager.default.fileExists(atPath: modelFileURL.path)
+    }
+
+    static func hasModel(in captureFolder: URL) -> Bool {
+        let url = captureFolder
+            .appendingPathComponent(Self.modelsFolderName)
+            .appendingPathComponent(Self.modelFileName)
+        return FileManager.default.fileExists(atPath: url.path)
+    }
+}
+
+private extension URL {
+    /// Convenience accessor for the application's Documents directory.
+    static var documentsDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
 }
 
 private extension URL {
